@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracked Shipping Prices</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        padding: 24px 16px;
+        background: #faf8fb;
+        color: #333;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .container {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 8px;
+        font-size: 28px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #777;
+        margin-bottom: 24px;
+        font-size: 14px;
+    }
+
+    .search {
+        width: 100%;
+        padding: 15px 18px;
+        border: 1px solid #ddd;
+        border-radius: 14px;
+        font-size: 16px;
+        outline: none;
+        background: white;
+        margin-bottom: 18px;
+    }
+
+    .search:focus {
+        border-color: #aaa;
+    }
+
+    #results {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .country {
+        background: white;
+        border: 1px solid #e7e3e7;
+        border-radius: 16px;
+        padding: 17px;
+    }
+
+    .country-name {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .unavailable {
+        color: #999;
+        font-style: italic;
+    }
+
+    .prices {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 8px;
+    }
+
+    .price {
+        background: #f7f5f7;
+        border-radius: 10px;
+        padding: 10px;
+        text-align: center;
+    }
+
+    .weight {
+        display: block;
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 3px;
+    }
+
+    .amount {
+        font-weight: 600;
+    }
+
+    .hint {
+        text-align: center;
+        color: #999;
+        font-size: 13px;
+        margin-top: 20px;
+    }
+
+    .notice {
+        background: #f3eef5;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 18px;
+        font-size: 13px;
+        color: #666;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>📦 Tracked Shipping Prices</h1>
+
+    <div class="subtitle">
+        Search your destination below
+    </div>
+
+    <div class="notice">
+        Prices are listed in SEK and depend on the destination and package weight.
+    </div>
+
+    <input
+        type="text"
+        id="search"
+        class="search"
+        placeholder="🔎 Search for a country..."
+        autocomplete="off"
+    >
+
+    <div id="results"></div>
+
+    <div class="hint" id="hint">
+        Start typing to search for a country.
+    </div>
+
+</div>
+
+<script>
+
+const groups = {
+
+    sweden: {
+        countries: ["Sweden"],
+        prices: {
+            "250g": "76 SEK",
+            "500g": "84 SEK",
+            "1kg": "99 SEK",
+            "2kg": "139 SEK",
+            "3kg": "185 SEK"
+        }
+    },
+
+    nordic: {
+        countries: ["Denmark", "Finland"],
+        prices: {
+            "250g": "152 SEK",
+            "1kg": "217.5 SEK",
+            "2kg": "296.25 SEK"
+        }
+    },
+
+    norway: {
+        countries: ["Norway", "Iceland"],
+        prices: {
+            "250g": "121.60 SEK",
+            "1kg": "174 SEK",
+            "2kg": "237 SEK"
+        }
+    },
+
+    premium50: {
+        countries: [
+            "Greenland",
+            "Faroe Islands",
+            "Åland Islands",
+            "Albania",
+            "Algeria",
+            "American Samoa",
+            "Andorra",
+            "Angola",
+            "Anguilla",
+            "Antigua & Barbuda",
+            "Argentina",
+            "Armenia",
+            "Azerbaijan",
+            "Bahamas",
+            "Bahrain",
+            "Bangladesh",
+            "Barbados",
+            "Belarus",
+            "Belize",
+            "Benin",
+            "Bermuda",
+            "Bhutan",
+            "Bolivia",
+            "Bosnia & Herzegovina",
+            "Botswana",
+            "British Virgin Islands",
+            "Brunei",
+            "Burkina Faso",
+            "Burundi",
+            "Cayman Islands",
+            "Cambodia",
+            "Cameroon",
+            "Cape Verde",
+            "Chad",
+            "Comoros",
+            "Congo - Brazzaville",
+            "Congo - Kinshasa",
+            "Central African Republic",
+            "Chile",
+            "Colombia",
+            "Cook Islands",
+            "Costa Rica",
+            "Côte d’ivoire",
+            "Djibouti",
+            "Dominica",
+            "Dominican Republic",
+            "Ecuador",
+            "Galapagos Islands",
+            "El Salvador",
+            "Ethiopia",
+            "Equatorial Guinea",
+            "Falkland Islands",
+            "Fiji",
+            "French Guiana",
+            "French Polynesia",
+            "Gabon",
+            "Gambia",
+            "Ghana",
+            "Grenada",
+            "Guadeloupe",
+            "Guam",
+            "Guatemala",
+            "Guinea",
+            "Guinea-Bissau",
+            "Guyana",
+            "Honduras",
+            "Iraq",
+            "Jamaica",
+            "Jordan",
+            "Kazakstan",
+            "Kenya",
+            "Kyrgyzstan",
+            "Kiribati",
+            "Kosovo",
+            "Kuwait",
+            "Laos",
+            "Lesotho",
+            "Libya",
+            "Macau SAR China",
+            "Madagascar",
+            "North Macedonia",
+            "Malawi",
+            "Maldives",
+            "Mali",
+            "Morocco",
+            "Martinique",
+            "Mauritius",
+            "Micronesia",
+            "Moldova",
+            "Monaco",
+            "Mongolia",
+            "Montenegro",
+            "Montserrat",
+            "Mozambique",
+            "Myanmar (Burma)",
+            "Namibia",
+            "Nauru",
+            "Nepal",
+            "Nicaragua",
+            "Niger",
+            "Nigeria",
+            "New Caledonia",
+            "Pakistan",
+            "Palau",
+            "Palestine",
+            "Panama",
+            "Papa New Guinea",
+            "Paraguay",
+            "Peru",
+            "Pitcairn Islands",
+            "Rwanda",
+            "Réunion",
+            "St. Helena",
+            "St. Kitts & Nevis",
+            "St. Lucia",
+            "St. Vincent & Grenadines",
+            "Solomon Islands",
+            "Samoa",
+            "San Marino",
+            "Senegal",
+            "Seychelles",
+            "Sierra Leone",
+            "Somalia",
+            "Sri Lanka",
+            "Sudan",
+            "South-Sudan",
+            "Suriname",
+            "Swaziland",
+            "São Tomé & Príncipe",
+            "Tajikistan",
+            "Tanzania",
+            "Timor-Leste",
+            "Togo",
+            "Tonga",
+            "Trinidad & Tobago",
+            "Tunisia",
+            "Turkmenistan",
+            "Turks & Caicos Islands",
+            "Tuvalu",
+            "Uganda",
+            "Uruguay",
+            "Uzbekistan",
+            "Vatican City",
+            "Venezuela",
+            "Zambia",
+            "Zimbabwe",
+            "Guernsey Alderney & Sark",
+            "Jersey"
+        ],
+        prices: {
+            "50g": "156 SEK",
+            "100g": "178 SEK",
+            "250g": "204 SEK",
+            "500g": "227 SEK",
+            "1kg": "292 SEK",
+            "2kg": "332 SEK"
+        }
+    },
+
+    zone121: {
+        countries: [
+            "Aruba",
+            "Australia",
+            "Brazil",
+            "Canada",
+            "Egypt",
+            "Georgia",
+            "Gibraltar",
+            "Hong Kong SAR China",
+            "India",
+            "Indonesia",
+            "Japan",
+            "Lebanon",
+            "Liechtenstein",
+            "Malaysia",
+            "Mexico",
+            "New Zealand",
+            "Oman",
+            "Philippines",
+            "Saudi Arabia",
+            "Switzerland",
+            "Singapore",
+            "South Africa",
+            "South Korea",
+            "Taiwan",
+            "Thailand",
+            "Turkey",
+            "United Arab Emirates",
+            "United Kingdom",
+            "Northern Ireland",
+            "Ukraine",
+            "Vietnam"
+        ],
+        prices: {
+            "250g": "121.60 SEK",
+            "1kg": "174 SEK",
+            "2kg": "237 SEK"
+        }
+    },
+
+    zone152: {
+        countries: [
+            "Austria",
+            "Belgium",
+            "Bulgaria",
+            "Croatia",
+            "Cyprus",
+            "Czech Republic",
+            "Estonia",
+            "France",
+            "Germany",
+            "Büsingen",
+            "Heligoland",
+            "Greece",
+            "Mount Athos",
+            "Hungary",
+            "Ireland",
+            "Italy",
+            "Campione d’Italia",
+            "Lavena Ponte Tresa",
+            "Brusimpiano & Porto Ceresio",
+            "Latvia",
+            "Lithuania",
+            "Luxemburg",
+            "Malta",
+            "Netherlands",
+            "Poland",
+            "Portugal",
+            "Azores",
+            "Romania",
+            "Serbia",
+            "Slovakia",
+            "Slovenia",
+            "Spain",
+            "Ceuta",
+            "Melilla"
+        ],
+        prices: {
+            "250g": "152 SEK",
+            "1kg": "217.5 SEK",
+            "2kg": "296.25 SEK"
+        }
+    }
+
+};
+
+const unavailable = [
+    "Israel",
+    "North Korea",
+    "Russia"
+];
+
+const countries = [];
+
+// Create country entries from the groups
+Object.values(groups).forEach(group => {
+    group.countries.forEach(country => {
+        countries.push({
+            name: country,
+            prices: group.prices
+        });
+    });
+});
+
+// Add unavailable countries
+unavailable.forEach(country => {
+    countries.push({
+        name: country,
+        prices: null
+    });
+});
+
+// Sort alphabetically
+countries.sort((a, b) => a.name.localeCompare(b.name));
+
+const search = document.getElementById("search");
+const results = document.getElementById("results");
+const hint = document.getElementById("hint");
+
+function showResults(query = "") {
+
+    const q = query.trim().toLowerCase();
+
+    if (!q) {
+        results.innerHTML = "";
+        hint.textContent = "Start typing to search for a country.";
+        return;
+    }
+
+    const matches = countries.filter(country =>
+        country.name.toLowerCase().includes(q)
+    );
+
+    results.innerHTML = "";
+
+    if (matches.length === 0) {
+        hint.textContent = "No country found 😭";
+        return;
+    }
+
+    hint.textContent =
+        matches.length === 1
+            ? "1 country found"
+            : `${matches.length} countries found`;
+
+    matches.forEach(country => {
+
+        const card = document.createElement("div");
+        card.className = "country";
+
+        let html = `
+            <div class="country-name">
+                ${country.name}
+            </div>
+        `;
+
+        if (!country.prices) {
+
+            html += `
+                <div class="unavailable">
+                    ❌ Tracked shipping is currently unavailable.
+                </div>
+            `;
+
+        } else {
+
+            html += `<div class="prices">`;
+
+            Object.entries(country.prices).forEach(([weight, price]) => {
+
+                html += `
+                    <div class="price">
+                        <span class="weight">${weight}</span>
+                        <span class="amount">${price}</span>
+                    </div>
+                `;
+
+            });
+
+            html += `</div>`;
+        }
+
+        card.innerHTML = html;
+        results.appendChild(card);
+    });
+}
+
+search.addEventListener("input", () => {
+    showResults(search.value);
+});
+
+</script>
+
+</body>
+</html>
